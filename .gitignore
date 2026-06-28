@@ -1,0 +1,46 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+
+# build output
+dist/
+build/
+
+# lambda packaging artifacts (apps/agent)
+apps/agent/lambda-pkg/
+apps/agent/dist-lambda.zip
+
+# AWS SAM
+infrastructure/.aws-sam/
+
+# env files
+.env
+.env.local
+.env.*.local
+
+# eval trace output (real-LLM evals dump per-run JSON here; gitignored)
+evals/.runs/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# misc
+.DS_Store
+*.pem
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# Claude Code session state
+.agents/session-changed

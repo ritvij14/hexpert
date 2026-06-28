@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+/* Tailwind v4 theme — fonts wired to next/font CSS variables (see layout.tsx). */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    font-family: var(--font-sans);
+    background-color: #09090b; /* zinc-950 */
+    color: #fafafa;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Custom scrollbar (matches design.md) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Streaming cursor — pulses to simulate live AI typing */
+@keyframes pulse-opacity {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+.stream-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 14px;
+  background-color: #a1a1aa;
+  margin-left: 4px;
+  vertical-align: middle;
+  animation: pulse-opacity 1s step-end infinite;
+}
+
+::selection {
+  background: rgb(99 102 241 / 0.3);
+  color: rgb(224 231 255);
+}
+
+/* Inline code (prose) */
+.prose-code {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: #d4d4d8;
+  background-color: #09090b;
+  border: 1px solid rgb(39 39 42);
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+/* highlight.js dark theme — tuned to the Hexpert design palette
+   (indigo keywords, emerald functions, amber strings, zinc comments). */
+.hljs {
+  color: #d4d4d8;
+}
+.hljs-comment,
+.hljs-quote {
+  color: #71717a;
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-type,
+.hljs-literal,
+.hljs-symbol {
+  color: #818cf8; /* indigo-400 */
+}
+.hljs-title,
+.hljs-title.function_,
+.hljs-section,
+.hljs-name {
+  color: #6ee7b7; /* emerald-300 */
+}
+.hljs-string,
+.hljs-attr,
+.hljs-number,
+.hljs-regexp,
+.hljs-template-variable {
+  color: #fcd34d; /* amber-300 */
+}
+.hljs-variable,
+.hljs-params,
+.hljs-property,
+.hljs-attribute {
+  color: #d4d4d8;
+}
+.hljs-meta {
+  color: #71717a;
+}
+.hljs-addition {
+  color: #6ee7b7;
+}
+.hljs-deletion {
+  color: #fca5a5;
+}

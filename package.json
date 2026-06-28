@@ -1,0 +1,32 @@
+{
+  "name": "hexpert",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,agent -c blue,green \"npm -w @hexpert/web run dev\" \"npm -w @hexpert/agent run dev\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "eval": "tsx evals/router.eval.ts; tsx evals/audit.eval.ts; tsx evals/qna.eval.ts; tsx evals/wallet.eval.ts",
+    "eval:router": "tsx evals/router.eval.ts",
+    "eval:audit": "tsx evals/audit.eval.ts",
+    "eval:qna": "tsx evals/qna.eval.ts",
+    "eval:wallet": "tsx evals/wallet.eval.ts",
+    "eval:report": "tsx evals/render-report.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "@types/supertest": "^7.2.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "concurrently": "latest",
+    "dotenv": "^17.4.2",
+    "supertest": "^7.2.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}

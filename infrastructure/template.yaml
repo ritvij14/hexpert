@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Hexpert agent — Express on AWS Lambda via the Lambda Web Adapter with response
+  streaming (ADR-011 / PRD §7). The Function URL uses InvokeMode RESPONSE_STREAM
+  so SSE frames from /api/chat reach the browser progressively.
+
+Parameters:
+  EtherscanApiKey:
+    Type: String
+    NoEcho: true
+    Description: Etherscan API key (wallet + contract tools).
+  AllowedOrigin:
+    Type: String
+    Default: "https://hexpert.ritvij.dev"
+    Description: Origin allowed by CORS — the frontend domain (hexpert.ritvij.dev). Browser→Lambda is moot under the Vercel gateway (PRD §4.2), but this is the correct config.
+  RedisUrl:
+    Type: String
+    NoEcho: true
+    Description: Upstash (or other) Redis URL for the TTL-evicted HITL checkpointer (ADR-008).
+  RedisTtlMinutes:
+    Type: String
+    Default: "60"
+    Description: Checkpoint TTL in minutes; abandoned HITL checkpoints auto-expire.
+  EthRpcUrl:
+    Type: String
+    Default: "https://ethereum.publicnode.com"
+    Description: Public Ethereum RPC for ENS forward/reverse resolution (wallet subgraph).
+
+Resources:
+  HexpertAgentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # Pre-staged by `npm -w @hexpert/agent run build:lambda` (run.sh + dist +
+      # prod node_modules). SAM zips this directory at deploy time.
+      CodeUri: ../apps/agent/lambda-pkg/
+      Handler: run.sh
+      Runtime: nodejs20.x
+      MemorySize: 512
+      # Wallet turn-2 on a whale runs ~40s (see agent-architecture Known Issues);
+      # 60s gives headroom. Streaming invokes support up to 15min.
+      Timeout: 60
+      Architectures:
+        - x86_64
+      Layers:
+        - !Sub "arn:aws:lambda:${AWS::Region}:753240598075:layer:LambdaAdapterLayerX86:28"
+      Environment:
+        Variables:
+          # AWS Lambda Web Adapter (ADR-011).
+          AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
+          AWS_LWA_INVOKE_MODE: response_stream
+          PORT: "8000"
+          RUST_LOG: info
+          # App config. BYOK keys are NEVER set here — they arrive per request
+          # in X-Api-Key / X-Search-Key headers. LOCAL_DEV_* must NOT be set on
+          # Lambda (local-dev-only fallback; dead code on Lambda).
+          ETHERSCAN_API_KEY: !Ref EtherscanApiKey
+          ALLOWED_ORIGIN: !Ref AllowedOrigin
+          REDIS_URL: !Ref RedisUrl
+          REDIS_TTL_MINUTES: !Ref RedisTtlMinutes
+          ETH_RPC_URL: !Ref EthRpcUrl
+
+  # Streaming Function URL (not API Gateway — PRD §7.1). RESPONSE_STREAM is what
+  # lets the Web Adapter push SSE chunks to the client as they are produced.
+  # AuthType AWS_IAM (ADR-012): the URL is NOT public. Only an AWS principal with
+  # lambda:InvokeFunctionUrl on this function may invoke. In production the
+  # Vercel Next.js API route signs each request (SigV4) with the hexpert-vercel
+  # IAM user's keys (PRD §3.4). No Principal: "*" resource-based policy.
+  HexpertAgentUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !GetAtt HexpertAgentFunction.Arn
+      AuthType: AWS_IAM
+      InvokeMode: RESPONSE_STREAM
+
+Outputs:
+  HexpertAgentUrl:
+    Description: Streaming Lambda Function URL (POST /api/chat, GET /health)
+    Value: !GetAtt HexpertAgentUrl.FunctionUrl

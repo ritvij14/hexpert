@@ -1,0 +1,14 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "hexpert-agent"
+resolve_s3 = true
+s3_prefix = "hexpert-agent"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+parameter_overrides = "AllowedOrigin=\"https://hexpert.ritvij.dev\" RedisTtlMinutes=\"60\" EthRpcUrl=\"https://ethereum.publicnode.com\""
+image_repositories = []
+
+[default.global.parameters]
+region = "ap-south-1"
