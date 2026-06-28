@@ -68,6 +68,9 @@ chatRouter.post("/", async (req, res) => {
   let toolCallCount = 0;
   let tokensIn = 0;
   let tokensOut = 0;
+  // Capture web_search query at on_tool_start (where ev.data.input is reliably
+  // populated) keyed by run_id, then consume it at on_tool_end.
+  const webSearchQueries = new Map<string, string>();
   const abort = new AbortController();
   // Abort the upstream LLM stream only if the client disconnects mid-response.
   // (req 'close' fires as soon as the body is read — not a disconnect signal.)
@@ -124,19 +127,22 @@ chatRouter.post("/", async (req, res) => {
         case "on_tool_start": {
           toolCallCount++;
           sse(res, { type: "tool", name: ev.name });
+          if (ev.name === "web_search") {
+            const inp = ev.data?.input as { query?: unknown } | undefined;
+            if (typeof inp?.query === "string") webSearchQueries.set(ev.run_id, inp.query);
+          }
           break;
         }
         case "on_tool_end": {
           // Surface web_search detail (queries, URLs surfed, bytes retrieved).
-          // on_tool_end carries data.input (the tool args → query) and data.output
-          // (a ToolMessage whose .content is the markdown the tool returned). The
-          // result URLs are on their own lines in that markdown, so a line-anchored
-          // URL regex picks just the surfed pages — not URLs inside excerpts.
+          // Query is captured at on_tool_start (ev.data.input is reliable there).
+          // on_tool_end carries data.output — a ToolMessage whose .content is the
+          // markdown the tool returned. The result URLs are on their own lines in
+          // that markdown, so a line-anchored URL regex picks just the surfed pages.
           if (ev.name !== "web_search") break;
-          const data = ev.data as { input?: { query?: unknown }; output?: unknown } | undefined;
-          const query =
-            typeof data?.input?.query === "string" ? data.input.query : "";
-          const out = data?.output;
+          const query = webSearchQueries.get(ev.run_id) ?? "";
+          webSearchQueries.delete(ev.run_id);
+          const out = (ev.data as { output?: unknown } | undefined)?.output;
           const text =
             typeof out === "string"
               ? out
