@@ -8,6 +8,10 @@ import type { ChatRequest } from "@hexpert/shared";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Match the 55s upstream timeout (below). Vercel's default serverless function
+// timeout is 10s on every plan; raise it so streaming chat isn't killed mid-turn.
+// Hobby plan caps at 10s — this value only takes effect on Pro (60s) or higher.
+export const maxDuration = 55;
 
 const BYOK_HEADERS = ["x-api-key", "x-provider", "x-model", "x-search-key"];
 
